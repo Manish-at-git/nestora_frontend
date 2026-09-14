@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => ({
     port: 3001,
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: process.env.VITE_BACKEND_URL,
         changeOrigin: true,
       },
     },
