@@ -1,0 +1,554 @@
+import type { NavItem } from "@/types/navigation";
+import type { Account, RolePermission } from "@/types/auth";
+
+// ============================================================================
+// Master Navigation Configuration for Admin
+// ============================================================================
+export const ADMIN_NAV_ITEMS: NavItem[] = [
+  { key: "associations", path: "/admin", icon: "Building", label: "Managed Properties" },
+  { key: "overview", path: "/admin/overview", icon: "Overview", label: "Overview" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "board_task", path: "/board-tasks", icon: "BoardTasks", label: "Board Task" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  { key: "committees", path: "/committees", icon: "Committees", label: "Committees" },
+  { key: "election", path: "/election", icon: "Election", label: "Election" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+      { key: "socials_board_member", path: "/board-members", label: "Board Member" },
+      { key: "socials_committee_member", path: "/committee-members", label: "Committee Member" },
+    ],
+  },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+  {
+    key: "financials",
+    path: "/financials",
+    icon: "Financials",
+    label: "Financials",
+    subItems: [
+      { key: "financials_balance_sheet", path: "/financials/balance-sheet", label: "Balance Sheet" },
+      { key: "financials_income_statement", path: "/financials/income-statement", label: "Income Statement" },
+      { key: "financials_delinquency_report", path: "/financials/delinquency-report", label: "Delinquency Report" },
+      { key: "financials_prepaid_report", path: "/financials/prepaid-report", label: "Prepaid Report" },
+      { key: "financials_vendor_aging", path: "/financials/vendor-aging", label: "Vendor Aging Report" },
+      { key: "financials_invoice", path: "/financials/invoices", label: "Invoice" },
+      { key: "financials_bank_transaction", path: "/financials/bank-transactions", label: "Bank Transaction" },
+      { key: "financials_bank_statement", path: "/financials/bank-statements", label: "Bank Statement" },
+      { key: "financials_other_report", path: "/financials/other-reports", label: "Other Report" },
+    ],
+  },
+  { key: "budget", path: "/budget", icon: "Budget", label: "Budget" },
+  { key: "chart_of_account", path: "/chart-of-accounts", icon: "Documents", label: "Chart of Account" },
+  { key: "bank", path: "/bank", icon: "Bank", label: "Bank" },
+  { key: "unit_documents", path: "/unit-documents", icon: "UnitDocument", label: "Unit Document" },
+  { key: "email_activity", path: "/email-activity", icon: "EmailActivity", label: "Email Activity" },
+  { key: "inspection", path: "/inspection", icon: "Inspection", label: "Inspection" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Super Admin
+// ============================================================================
+export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/super-admin", icon: "Overview", label: "Overview" },
+  { key: "entity_types", path: "/entity-types", icon: "Layers", label: "Entity Types" },
+  { key: "entities", path: "/entities", icon: "Building2", label: "Entities" },
+  { key: "roles", path: "/roles", icon: "Shield", label: "Roles" },
+  { key: "features", path: "/features", icon: "LayoutGrid", label: "Features" },
+  { key: "permissions", path: "/permissions", icon: "Key", label: "Permissions" },
+  { key: "subscription_plans", path: "/subscriptions", icon: "CreditCard", label: "Subscriptions" },
+  { key: "associations", path: "/associations", icon: "Building", label: "Associations" },
+  { key: "bank", path: "/bank", icon: "Bank", label: "Bank" },
+  { key: "financials", path: "/financials", icon: "Financials", label: "Financials" },
+  { key: "employees", path: "/employees", icon: "Users", label: "Employees" },
+  { key: "users", path: "/users", icon: "User", label: "Users" },
+  { key: "vendors", path: "/vendors", icon: "Store", label: "Vendors" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Board Member
+// ============================================================================
+export const BOARD_MEMBER_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
+  { key: "wallet", path: "/wallet", icon: "Wallet", label: "Wallet" },
+  { key: "board_task", path: "/board-tasks", icon: "BoardTasks", label: "Board Task" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "inspection", path: "/inspection", icon: "Inspection", label: "Inspection" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  { key: "committees", path: "/committees", icon: "Committees", label: "Committees" },
+  { key: "election", path: "/election", icon: "Election", label: "Election" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+      { key: "socials_board_member", path: "/board-members", label: "Board Member" },
+      { key: "socials_committee_member", path: "/committee-members", label: "Committee Member" },
+    ],
+  },
+  {
+    key: "visitors",
+    path: "/visitors",
+    icon: "Users",
+    label: "Visitor Management",
+    subItems: [
+      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+    ],
+  },
+  { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
+  { key: "marketplace", path: "/marketplace", icon: "ShoppingBag", label: "Marketplace" },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Homeowner
+// ============================================================================
+export const HOMEOWNER_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
+  { key: "wallet", path: "/wallet", icon: "Wallet", label: "Wallet" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  { key: "election", path: "/election", icon: "Election", label: "Election" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+      { key: "socials_board_member", path: "/board-members", label: "Board Member" },
+      { key: "socials_committee_member", path: "/committee-members", label: "Committee Member" },
+    ],
+  },
+  { key: "committees", path: "/committees", icon: "Committees", label: "Committees" },
+  { key: "marketplace", path: "/marketplace", icon: "ShoppingBag", label: "Marketplace" },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  {
+    key: "visitors",
+    path: "/visitors",
+    icon: "Users",
+    label: "Visitor Management",
+    subItems: [
+      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+    ],
+  },
+  { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Tenant
+// ============================================================================
+export const TENANT_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
+  { key: "wallet", path: "/wallet", icon: "Wallet", label: "Wallet & Rent" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+    ],
+  },
+  { key: "marketplace", path: "/marketplace", icon: "ShoppingBag", label: "Marketplace" },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  {
+    key: "visitors",
+    path: "/visitors",
+    icon: "Users",
+    label: "Visitor Management",
+    subItems: [
+      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+    ],
+  },
+  { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Security
+// ============================================================================
+export const SECURITY_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/security", icon: "Overview", label: "Overview" },
+  {
+    key: "visitor_management",
+    path: "/visitor-management",
+    icon: "Users",
+    label: "Visitor Management",
+    subItems: [
+      { key: "vm_new", path: "/visitor-management/new", label: "New Visitor" },
+      { key: "vm_preapproved", path: "/visitor-management/preapproved", label: "Pre-Approved Visitors" },
+      { key: "vm_checkin", path: "/visitor-management/checkin", label: "Check-In" },
+      { key: "vm_checkout", path: "/visitor-management/checkout", label: "Check-Out" },
+      { key: "vm_history", path: "/visitor-management/history", label: "Visitor History" },
+    ],
+  },
+  {
+    key: "delivery",
+    path: "/delivery",
+    icon: "Package",
+    label: "Delivery",
+    subItems: [
+      { key: "delivery_new", path: "/delivery/new", label: "New Delivery" },
+      { key: "delivery_active", path: "/delivery/active", label: "Active Deliveries" },
+      { key: "delivery_history", path: "/delivery/history", label: "Delivery History" },
+    ],
+  },
+  { key: "vehicles", path: "/vehicles", icon: "Car", label: "Vehicles" },
+  { key: "staff", path: "/staff", icon: "UserCheck", label: "Staff" },
+  { key: "incidents", path: "/incidents", icon: "ShieldAlert", label: "Incidents" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Accountant
+// ============================================================================
+export const ACCOUNTANT_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/financials", icon: "Overview", label: "Financial Ledger" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "board_task", path: "/board-tasks", icon: "BoardTasks", label: "Board Task" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  { key: "committees", path: "/committees", icon: "Committees", label: "Committees" },
+  { key: "election", path: "/election", icon: "Election", label: "Election" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+      { key: "socials_board_member", path: "/board-members", label: "Board Member" },
+      { key: "socials_committee_member", path: "/committee-members", label: "Committee Member" },
+    ],
+  },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+  {
+    key: "financials",
+    path: "/financials",
+    icon: "Financials",
+    label: "Financials",
+    subItems: [
+      { key: "financials_balance_sheet", path: "/financials/balance-sheet", label: "Balance Sheet" },
+      { key: "financials_income_statement", path: "/financials/income-statement", label: "Income Statement" },
+      { key: "financials_delinquency_report", path: "/financials/delinquency-report", label: "Delinquency Report" },
+      { key: "financials_prepaid_report", path: "/financials/prepaid-report", label: "Prepaid Report" },
+      { key: "financials_vendor_aging", path: "/financials/vendor-aging", label: "Vendor Aging Report" },
+      { key: "financials_invoice", path: "/financials/invoices", label: "Invoice" },
+      { key: "financials_bank_transaction", path: "/financials/bank-transactions", label: "Bank Transaction" },
+      { key: "financials_bank_statement", path: "/financials/bank-statements", label: "Bank Statement" },
+      { key: "financials_other_report", path: "/financials/other-reports", label: "Other Report" },
+    ],
+  },
+  { key: "budget", path: "/budget", icon: "Budget", label: "Budget" },
+  { key: "chart_of_account", path: "/chart-of-accounts", icon: "Documents", label: "Chart of Account" },
+  { key: "bank", path: "/bank", icon: "Bank", label: "Bank" },
+  { key: "unit_documents", path: "/unit-documents", icon: "UnitDocument", label: "Unit Document" },
+  { key: "email_activity", path: "/email-activity", icon: "EmailActivity", label: "Email Activity" },
+  { key: "inspection", path: "/inspection", icon: "Inspection", label: "Inspection" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Committee Member
+// ============================================================================
+export const COMMITTEE_MEMBER_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
+  { key: "committees", path: "/committees", icon: "Committees", label: "Committee Workspace" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Requests" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+      { key: "socials_committee_member", path: "/committee-members", label: "Committee Member" },
+    ],
+  },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+];
+
+// ============================================================================
+// Master Navigation Configuration for Generic Member
+// ============================================================================
+export const MEMBER_NAV_ITEMS: NavItem[] = [
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
+  { key: "wallet", path: "/wallet", icon: "Wallet", label: "Wallet" },
+  { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
+  { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
+  {
+    key: "socials",
+    path: "/announcements",
+    icon: "Socials",
+    label: "Socials",
+    subItems: [
+      { key: "socials_announcement", path: "/announcements", label: "Announcement" },
+      { key: "socials_events", path: "/events", label: "Events" },
+      { key: "socials_polls", path: "/polls", label: "Polls" },
+    ],
+  },
+  { key: "marketplace", path: "/marketplace", icon: "ShoppingBag", label: "Marketplace" },
+  { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
+  { key: "document", path: "/documents", icon: "Documents", label: "Documents" },
+];
+
+/**
+ * Access Control Evaluator
+ * Checks whether the user has permission to view a given feature based on:
+ * 1. Super Admin / Admin role bypass
+ * 2. `account.role_permissions` map
+ * 3. `account.allowed_features` subscription plan
+ * 4. Association allowed features override
+ */
+export const checkFeatureAccess = (
+  featureIdentifier: string,
+  account: Account | null,
+  associationAllowedFeatures?: string[]
+): boolean => {
+  if (!account) return false;
+
+  // Overview / Dashboard is always accessible
+  const normalized = featureIdentifier.trim().toLowerCase();
+  if (
+    normalized === "overview" ||
+    normalized === "dashboard" ||
+    featureIdentifier === "Overview" ||
+    featureIdentifier === "Dashboard"
+  ) {
+    return true;
+  }
+
+  // Super admin has global unrestricted access
+  if (account.role === "Super admin") {
+    return true;
+  }
+
+  // Association-level feature overrides
+  if (associationAllowedFeatures !== undefined) {
+    if (
+      !associationAllowedFeatures.includes(featureIdentifier) &&
+      !associationAllowedFeatures.some((f) => f.toLowerCase() === normalized)
+    ) {
+      return false;
+    }
+  }
+
+  // Check fine-grained role_permissions (Array or Object)
+  if (account.role_permissions) {
+    if (Array.isArray(account.role_permissions)) {
+      if (account.role_permissions.length > 0) {
+        const found = account.role_permissions.find(
+          (p) =>
+            (p.feature_code && p.feature_code.toLowerCase() === normalized) ||
+            (p.feature_name && p.feature_name.toLowerCase() === normalized) ||
+            (p.url && p.url.toLowerCase() === normalized)
+        );
+        if (found) {
+          return Boolean(found.can_view);
+        }
+        return false;
+      }
+    } else if (typeof account.role_permissions === "object" && Object.keys(account.role_permissions).length > 0) {
+      // 1. Direct key match (e.g. "Amenities", "amenities", "/amenities")
+      if (account.role_permissions[featureIdentifier]) {
+        return Boolean(account.role_permissions[featureIdentifier].can_view);
+      }
+      // 2. Lowercase match
+      if (account.role_permissions[normalized]) {
+        return Boolean(account.role_permissions[normalized].can_view);
+      }
+      // 3. Match against feature_name or feature_code
+      const match = Object.values(account.role_permissions).find(
+        (p) =>
+          (p.feature_name && p.feature_name.toLowerCase() === normalized) ||
+          (p.feature_code && p.feature_code.toLowerCase() === normalized)
+      );
+      if (match) {
+        return Boolean(match.can_view);
+      }
+      return false;
+    }
+  }
+
+  // Admin and Security fallback when no role_permissions configured
+  if (account.role === "Admin" || account.role === "Security") {
+    return true;
+  }
+
+  // Fallback to Plan-based `allowed_features`
+  const allowed = account.allowed_features || [];
+  if (!allowed || allowed.length === 0) return false;
+  return (
+    allowed.includes(featureIdentifier) ||
+    allowed.some((f) => f.toLowerCase() === normalized)
+  );
+};
+
+/**
+ * Constructs dynamic NavItem tree directly from database permissions array
+ */
+export const buildDynamicNavItemsFromPermissions = (
+  permissions: RolePermission[]
+): NavItem[] => {
+  const allowed = permissions.filter((p) => Boolean(p.can_view));
+
+  if (allowed.length === 0) return [];
+
+  // Map to store children by parent_id
+  const childrenMap = new Map<string, { key: string; label: string; path?: string }[]>();
+
+  allowed.forEach((p) => {
+    if (p.parent_id) {
+      const list = childrenMap.get(p.parent_id) || [];
+      list.push({
+        key: p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "",
+        label: p.feature_name || "",
+        path: p.url || undefined,
+      });
+      childrenMap.set(p.parent_id, list);
+    }
+  });
+
+  // Build top-level items
+  const topLevel: NavItem[] = [];
+  allowed.forEach((p) => {
+    if (!p.parent_id) {
+      const subItems = p.feature_id ? childrenMap.get(p.feature_id) : undefined;
+      topLevel.push({
+        key: p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "",
+        label: p.feature_name || "",
+        path: p.url || (subItems && subItems[0]?.path) || undefined,
+        icon: p.icon || "LayoutGrid",
+        subItems: subItems && subItems.length > 0 ? subItems : undefined,
+      });
+    }
+  });
+
+  return topLevel;
+};
+
+/**
+ * Returns the filtered, role-authorized navigation list for any account
+ */
+export const getNavItemsForAccount = (
+  account: Account | null,
+  customNavItems?: NavItem[],
+  associationAllowedFeatures?: string[]
+): NavItem[] => {
+  // 1. Prioritize Dynamic Database-Driven Sidebar (Option B)
+  if (
+    !customNavItems &&
+    account?.role_permissions &&
+    Array.isArray(account.role_permissions) &&
+    account.role_permissions.length > 0
+  ) {
+    const dynamicItems = buildDynamicNavItemsFromPermissions(
+      account.role_permissions
+    );
+    if (dynamicItems.length > 0) {
+      return dynamicItems;
+    }
+  }
+
+  // 2. Fallback: Determine base list by static role configuration if not supplied by DB
+  let baseItems = customNavItems;
+  if (!baseItems || baseItems.length === 0) {
+    if (!account) {
+      baseItems = MEMBER_NAV_ITEMS;
+    } else {
+      const roleLower = account.role?.toLowerCase() || "";
+      switch (roleLower) {
+        case "super admin":
+          baseItems = SUPER_ADMIN_NAV_ITEMS;
+          break;
+        case "admin":
+          baseItems = ADMIN_NAV_ITEMS;
+          break;
+        case "board member":
+          baseItems = BOARD_MEMBER_NAV_ITEMS;
+          break;
+        case "homeowner":
+          baseItems = HOMEOWNER_NAV_ITEMS;
+          break;
+        case "tenant":
+          baseItems = TENANT_NAV_ITEMS;
+          break;
+        case "security":
+          baseItems = SECURITY_NAV_ITEMS;
+          break;
+        case "accountant":
+          baseItems = ACCOUNTANT_NAV_ITEMS;
+          break;
+        case "committee member":
+          baseItems = COMMITTEE_MEMBER_NAV_ITEMS;
+          break;
+        default:
+          baseItems = MEMBER_NAV_ITEMS;
+          break;
+      }
+    }
+  }
+
+  if (!account) {
+    // In preview/unauthenticated mode, show all navigation items
+    return baseItems;
+  }
+
+  const isAdmin = account.role === "Super admin" || account.role === "Admin";
+  const result: NavItem[] = [];
+
+  baseItems.forEach((item) => {
+    const isLocked = !checkFeatureAccess(
+      item.label,
+      account,
+      associationAllowedFeatures
+    );
+
+    // Non-admins only see features they actually have access to
+    if (!isAdmin && isLocked) return;
+
+    if (item.subItems && item.subItems.length > 0) {
+      const mappedSub = item.subItems
+        .map((sub) => {
+          const subLocked = !checkFeatureAccess(
+            sub.label,
+            account,
+            associationAllowedFeatures
+          );
+          if (!isAdmin && subLocked) return null;
+          return { ...sub, isLocked: subLocked };
+        })
+        .filter(Boolean) as typeof item.subItems;
+
+      if (mappedSub.length > 0) {
+        result.push({ ...item, isLocked, subItems: mappedSub });
+      }
+    } else {
+      result.push({ ...item, isLocked });
+    }
+  });
+
+  return result;
+};
