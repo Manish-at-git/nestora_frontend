@@ -23,7 +23,14 @@ import {
   Mail,
 } from "lucide-react";
 
-import { ModalWrapper, FormModal, ConfirmDialog, DeleteModal } from "@/components/common";
+import {
+  ConfirmDialog,
+  DeleteModal,
+  FileActions,
+  FormModal,
+  ModalWrapper,
+  TableRowActions,
+} from "@/components/common";
 import { DataTable } from "@/components/common/DataTable";
 import { FormField } from "@/components/common/FormField";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -136,6 +143,7 @@ export const DesignSystemPage: React.FC = () => {
             <TabsTrigger value="icons">Centralized Icons</TabsTrigger>
             <TabsTrigger value="forms">Form Fields</TabsTrigger>
             <TabsTrigger value="table">Data Table</TabsTrigger>
+            <TabsTrigger value="table-actions">Table Actions</TabsTrigger>
             <TabsTrigger value="feedback">Feedback & States</TabsTrigger>
           </TabsList>
 
@@ -195,6 +203,91 @@ export const DesignSystemPage: React.FC = () => {
                   <Avatar size="md" fallbackText="Admin User" />
                   <Avatar size="lg" fallbackText="Nestora Staff" />
                   <Avatar size="xl" fallbackText="Super Admin" />
+                </div>
+              </div>
+            </MotionPage>
+          </TabsContent>
+
+          <TabsContent value="table-actions">
+            <MotionPage className="max-w-4xl space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">
+                  File and Row Actions
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  Shared table controls for opening, downloading, viewing, editing, and deleting records.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                  <h4 className="text-sm font-bold text-slate-800">
+                    FileActions
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Open uses sky blue; download uses emerald green.
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">
+                        Insurance Policy.pdf
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        File controls
+                      </p>
+                    </div>
+                    <FileActions fileUrl="https://example.com/document.pdf" />
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                  <h4 className="text-sm font-bold text-slate-800">
+                    TableRowActions
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    View, edit, and delete remain separate from file controls.
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">
+                        Association Document
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        Record controls
+                      </p>
+                    </div>
+                    <TableRowActions
+                      onView={() => undefined}
+                      onEdit={() => undefined}
+                      onDelete={() => undefined}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+                <h4 className="text-sm font-bold text-slate-800">
+                  Compact table cell preview
+                </h4>
+                <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                  <div className="grid grid-cols-[1fr_100px_120px] border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-500">
+                    <span>Document</span>
+                    <span className="text-center">File</span>
+                    <span className="text-center">Actions</span>
+                  </div>
+                  <div className="grid grid-cols-[1fr_100px_120px] items-center px-4 py-2.5 text-xs">
+                    <span className="font-medium text-slate-700">
+                      Society Registration.pdf
+                    </span>
+                    <FileActions fileUrl="https://example.com/document.pdf" />
+                    <TableRowActions
+                      onView={() => undefined}
+                      onEdit={() => undefined}
+                      onDelete={() => undefined}
+                    />
+                  </div>
                 </div>
               </div>
             </MotionPage>

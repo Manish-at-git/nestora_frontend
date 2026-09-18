@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import {
   Key,
@@ -37,7 +37,318 @@ interface LocalPermissionState {
   can_view: boolean;
   can_update: boolean;
   can_delete: boolean;
+  sidebar_order: number;
 }
+
+type PermissionField = "can_create" | "can_view" | "can_update" | "can_delete";
+
+const EMPTY_PERMISSION: LocalPermissionState = {
+  can_create: false,
+  can_view: false,
+  can_update: false,
+  can_delete: false,
+  sidebar_order: 0,
+};
+
+interface PermissionStore {
+  get: (featureId: string) => LocalPermissionState;
+  getAll: () => Record<string, LocalPermissionState>;
+  getRevision: () => number;
+  subscribe: (featureId: string, listener: () => void) => () => void;
+  subscribeAll: (listener: () => void) => () => void;
+  update: (
+    featureId: string,
+    updater: (current: LocalPermissionState) => LocalPermissionState
+  ) => void;
+  replace: (next: Record<string, LocalPermissionState>) => void;
+}
+
+const createPermissionStore = (): PermissionStore => {
+  let values: Record<string, LocalPermissionState> = {};
+  let revision = 0;
+  const rowListeners = new Map<string, Set<() => void>>();
+  const allListeners = new Set<() => void>();
+
+  const notifyRow = (featureId: string) => {
+    rowListeners.get(featureId)?.forEach((listener) => listener());
+  };
+
+  const notifyAll = () => {
+    revision += 1;
+    allListeners.forEach((listener) => listener());
+  };
+
+  return {
+    get: (featureId) => values[featureId] || EMPTY_PERMISSION,
+    getAll: () => values,
+    getRevision: () => revision,
+    subscribe: (featureId, listener) => {
+      const listeners = rowListeners.get(featureId) || new Set<() => void>();
+      listeners.add(listener);
+      rowListeners.set(featureId, listeners);
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) rowListeners.delete(featureId);
+      };
+    },
+    subscribeAll: (listener) => {
+      allListeners.add(listener);
+      return () => {
+        allListeners.delete(listener);
+      };
+    },
+    update: (featureId, updater) => {
+      const current = values[featureId] || EMPTY_PERMISSION;
+      const next = updater(current);
+      if (next === current) return;
+      values = { ...values, [featureId]: next };
+      notifyRow(featureId);
+      notifyAll();
+    },
+    replace: (next) => {
+      const affectedIds = new Set([...Object.keys(values), ...Object.keys(next)]);
+      values = next;
+      affectedIds.forEach(notifyRow);
+      notifyAll();
+    },
+  };
+};
+
+const usePermissionRow = (store: PermissionStore, featureId: string) => {
+  const subscribe = useCallback(
+    (listener: () => void) => store.subscribe(featureId, listener),
+    [store, featureId]
+  );
+  const getSnapshot = useCallback(() => store.get(featureId), [store, featureId]);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+};
+
+const usePermissionStoreRevision = (store: PermissionStore) => {
+  return React.useSyncExternalStore(
+    store.subscribeAll,
+    store.getRevision,
+    store.getRevision
+  );
+};
+
+interface PermissionCheckboxCellProps {
+  store: PermissionStore;
+  featureId: string;
+  field: PermissionField;
+  readOnly: boolean;
+}
+
+const PermissionCheckboxCell = React.memo<PermissionCheckboxCellProps>(
+  ({ store, featureId, field, readOnly }) => {
+    const permission = usePermissionRow(store, featureId);
+    return (
+      <div className="flex justify-center">
+        <Checkbox
+          id={`perm-${field}-${featureId}`}
+          checked={permission[field]}
+          disabled={readOnly}
+          onCheckedChange={
+            readOnly
+              ? undefined
+              : () =>
+                  store.update(featureId, (current) => ({
+                    ...current,
+                    [field]: !current[field],
+                  }))
+          }
+        />
+      </div>
+    );
+  }
+);
+PermissionCheckboxCell.displayName = "PermissionCheckboxCell";
+
+interface SidebarOrderCellProps {
+  store: PermissionStore;
+  featureId: string;
+  featureName: string;
+  readOnly: boolean;
+}
+
+const SidebarOrderCell = React.memo<SidebarOrderCellProps>(
+  ({ store, featureId, featureName, readOnly }) => {
+    const permission = usePermissionRow(store, featureId);
+    return (
+      <input
+        aria-label={`Sidebar position for ${featureName}`}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={permission.sidebar_order}
+        disabled={readOnly}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (!/^\d*$/.test(value)) return;
+          store.update(featureId, (current) => ({
+            ...current,
+            sidebar_order: value === "" ? 0 : Number(value),
+          }));
+        }}
+        className="h-8 w-16 rounded-md border border-slate-200 bg-white px-2 text-center text-xs text-slate-700 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50 disabled:text-slate-400"
+      />
+    );
+  }
+);
+SidebarOrderCell.displayName = "SidebarOrderCell";
+
+interface PermissionColumnHeaderProps {
+  store: PermissionStore;
+  features: RolePermissionMatrixItem[];
+  field: PermissionField;
+  label: string;
+  readOnly: boolean;
+  onToggle: (field: PermissionField) => void;
+}
+
+const PermissionColumnHeader = React.memo<PermissionColumnHeaderProps>(
+  ({ store, features, field, label, readOnly, onToggle }) => {
+    usePermissionStoreRevision(store);
+    if (readOnly) return <>{label}</>;
+
+    const checkedCount = features.filter((feature) => store.get(feature.feature_id)[field]).length;
+    const isAllChecked = features.length > 0 && checkedCount === features.length;
+    const isIndeterminate = checkedCount > 0 && checkedCount < features.length;
+
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle(field);
+        }}
+        className="group inline-flex items-center justify-center gap-1.5 py-1 px-2 -my-1 rounded-md text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 active:bg-blue-100/60 transition-all cursor-pointer select-none"
+        title={
+          isAllChecked
+            ? `Clear all ${label} permissions (${checkedCount}/${features.length})`
+            : `Select all ${label} permissions (${checkedCount}/${features.length})`
+        }
+      >
+        <span>{label}</span>
+        <span
+          className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded text-[9px] font-bold transition-colors ${
+            isAllChecked
+              ? "bg-blue-600 text-white"
+              : isIndeterminate
+              ? "bg-blue-100 text-blue-700"
+              : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
+          }`}
+        >
+          {isAllChecked ? "✓" : isIndeterminate ? "−" : "+"}
+        </span>
+      </button>
+    );
+  }
+);
+PermissionColumnHeader.displayName = "PermissionColumnHeader";
+
+interface PermissionRowAllCellProps {
+  store: PermissionStore;
+  featureId: string;
+  readOnly: boolean;
+}
+
+const PermissionRowAllCell = React.memo<PermissionRowAllCellProps>(
+  ({ store, featureId, readOnly }) => {
+    const permission = usePermissionRow(store, featureId);
+    const isRowFull =
+      permission.can_create &&
+      permission.can_view &&
+      permission.can_update &&
+      permission.can_delete;
+
+    if (readOnly) return null;
+
+    return (
+      <div className="flex justify-center">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() =>
+            store.update(featureId, (current) => ({
+              ...current,
+              can_create: !isRowFull,
+              can_view: !isRowFull,
+              can_update: !isRowFull,
+              can_delete: !isRowFull,
+            }))
+          }
+          className="h-6 w-6 p-0 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-[11px]"
+          title={isRowFull ? "Clear row" : "Select all in row"}
+        >
+          {isRowFull ? "✓" : "+"}
+        </Button>
+      </div>
+    );
+  }
+);
+PermissionRowAllCell.displayName = "PermissionRowAllCell";
+
+interface PermissionAllHeaderProps {
+  store: PermissionStore;
+  features: RolePermissionMatrixItem[];
+  readOnly: boolean;
+  onToggle: () => void;
+}
+
+const PermissionAllHeader = React.memo<PermissionAllHeaderProps>(
+  ({ store, features, readOnly, onToggle }) => {
+    usePermissionStoreRevision(store);
+    if (readOnly) return <>Row All</>;
+
+    const fullRowsCount = features.filter((feature) => {
+      const permission = store.get(feature.feature_id);
+      return (
+        permission.can_create &&
+        permission.can_view &&
+        permission.can_update &&
+        permission.can_delete
+      );
+    }).length;
+    const isAllFull = features.length > 0 && fullRowsCount === features.length;
+
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle();
+        }}
+        className="group inline-flex items-center justify-center gap-1 py-1 px-1.5 -my-1 rounded-md text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 active:bg-blue-100/60 transition-all cursor-pointer select-none"
+        title={isAllFull ? "Clear all permissions" : "Select all permissions"}
+      >
+        <span>Row All</span>
+        <span
+          className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded text-[9px] font-bold transition-colors ${
+            isAllFull
+              ? "bg-blue-600 text-white"
+              : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
+          }`}
+        >
+          {isAllFull ? "✓" : "+"}
+        </span>
+      </button>
+    );
+  }
+);
+PermissionAllHeader.displayName = "PermissionAllHeader";
+
+const ConfiguredFeatureCount = React.memo<{ store: PermissionStore }>(({ store }) => {
+  usePermissionStoreRevision(store);
+  const count = Object.values(store.getAll()).filter(
+    (permission) =>
+      permission.can_view ||
+      permission.can_create ||
+      permission.can_update ||
+      permission.can_delete
+  ).length;
+  return <>{count}</>;
+});
+ConfiguredFeatureCount.displayName = "ConfiguredFeatureCount";
 
 export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps> = ({
   isOpen,
@@ -53,8 +364,11 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
 
   const [updateBulk, { isLoading: isSaving }] = useUpdateRolePermissionsBulkMutation();
 
-  // Local state for permissions map: { [featureId]: { can_create, can_view, can_update, can_delete } }
-  const [permissionsMap, setPermissionsMap] = useState<Record<string, LocalPermissionState>>({});
+  const permissionStoreRef = useRef<PermissionStore | null>(null);
+  if (!permissionStoreRef.current) {
+    permissionStoreRef.current = createPermissionStore();
+  }
+  const permissionStore = permissionStoreRef.current;
 
   // Sync loaded data to local state
   useEffect(() => {
@@ -66,121 +380,61 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           can_view: Boolean(Number(f.can_view)),
           can_update: Boolean(Number(f.can_update)),
           can_delete: Boolean(Number(f.can_delete)),
+          sidebar_order: Number(f.sidebar_order ?? 0),
         };
       });
-      setPermissionsMap(initialMap);
+      permissionStore.replace(initialMap);
     }
-  }, [matrixData]);
-
-  // Toggle single cell independently - does NOT alter other permissions
-  const handleCellToggle = useCallback(
-    (
-      featureId: string,
-      field: "can_create" | "can_view" | "can_update" | "can_delete"
-    ) => {
-      if (readOnly) return;
-      setPermissionsMap((prev) => {
-        const current = prev[featureId] || {
-          can_create: false,
-          can_view: false,
-          can_update: false,
-          can_delete: false,
-        };
-        return {
-          ...prev,
-          [featureId]: {
-            ...current,
-            [field]: !current[field],
-          },
-        };
-      });
-    },
-    [readOnly]
-  );
-
-  // Toggle all actions in a single row
-  const handleRowToggleAll = useCallback(
-    (featureId: string) => {
-      if (readOnly) return;
-      setPermissionsMap((prev) => {
-        const current = prev[featureId] || {
-          can_create: false,
-          can_view: false,
-          can_update: false,
-          can_delete: false,
-        };
-        const allActive =
-          current.can_create && current.can_view && current.can_update && current.can_delete;
-        const targetVal = !allActive;
-
-        return {
-          ...prev,
-          [featureId]: {
-            can_create: targetVal,
-            can_view: targetVal,
-            can_update: targetVal,
-            can_delete: targetVal,
-          },
-        };
-      });
-    },
-    [readOnly]
-  );
+  }, [matrixData, permissionStore]);
 
   // Toggle all rows for a specific column ("can_create" | "can_view" | "can_update" | "can_delete")
   const handleColumnToggleAll = useCallback(
-    (field: "can_create" | "can_view" | "can_update" | "can_delete") => {
+    (field: PermissionField) => {
       if (readOnly || !matrixData?.features || matrixData.features.length === 0) return;
-      setPermissionsMap((prev) => {
-        const features = matrixData.features;
-        const allChecked = features.every((f) => Boolean(prev[f.feature_id]?.[field]));
-        const targetVal = !allChecked;
-
-        const next: Record<string, LocalPermissionState> = { ...prev };
-        features.forEach((f) => {
-          const current = next[f.feature_id] || {
-            can_create: false,
-            can_view: false,
-            can_update: false,
-            can_delete: false,
-          };
-          next[f.feature_id] = {
-            ...current,
-            [field]: targetVal,
-          };
-        });
-        return next;
+      const features = matrixData.features;
+      const currentPermissions = permissionStore.getAll();
+      const allChecked = features.every((feature) =>
+        Boolean(permissionStore.get(feature.feature_id)[field])
+      );
+      const targetValue = !allChecked;
+      const next = { ...currentPermissions };
+      features.forEach((feature) => {
+        next[feature.feature_id] = {
+          ...permissionStore.get(feature.feature_id),
+          [field]: targetValue,
+        };
       });
+      permissionStore.replace(next);
     },
-    [readOnly, matrixData]
+    [readOnly, matrixData, permissionStore]
   );
 
   // Toggle everything (all rows and all columns)
   const handleToggleEverything = useCallback(() => {
     if (readOnly || !matrixData?.features || matrixData.features.length === 0) return;
-    setPermissionsMap((prev) => {
-      const features = matrixData.features;
-      const allChecked = features.every(
-        (f) =>
-          prev[f.feature_id]?.can_create &&
-          prev[f.feature_id]?.can_view &&
-          prev[f.feature_id]?.can_update &&
-          prev[f.feature_id]?.can_delete
+    const features = matrixData.features;
+    const allChecked = features.every((feature) => {
+      const permission = permissionStore.get(feature.feature_id);
+      return (
+        permission.can_create &&
+        permission.can_view &&
+        permission.can_update &&
+        permission.can_delete
       );
-      const targetVal = !allChecked;
-
-      const next: Record<string, LocalPermissionState> = {};
-      features.forEach((f) => {
-        next[f.feature_id] = {
-          can_create: targetVal,
-          can_view: targetVal,
-          can_update: targetVal,
-          can_delete: targetVal,
-        };
-      });
-      return next;
     });
-  }, [readOnly, matrixData]);
+    const targetValue = !allChecked;
+    const next = { ...permissionStore.getAll() };
+    features.forEach((feature) => {
+      next[feature.feature_id] = {
+        ...permissionStore.get(feature.feature_id),
+        can_create: targetValue,
+        can_view: targetValue,
+        can_update: targetValue,
+        can_delete: targetValue,
+      };
+    });
+    permissionStore.replace(next);
+  }, [readOnly, matrixData, permissionStore]);
 
   // Presets: Grant All
   const handleGrantAll = () => {
@@ -192,9 +446,10 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
         can_view: true,
         can_update: true,
         can_delete: true,
+        sidebar_order: permissionStore.get(f.feature_id).sidebar_order,
       };
     });
-    setPermissionsMap(next);
+    permissionStore.replace(next);
     toast.info("Full CRUD granted across all features");
   };
 
@@ -208,9 +463,10 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
         can_view: true,
         can_update: false,
         can_delete: false,
+        sidebar_order: permissionStore.get(f.feature_id).sidebar_order,
       };
     });
-    setPermissionsMap(next);
+    permissionStore.replace(next);
     toast.info("Read-only access set across all features");
   };
 
@@ -224,30 +480,25 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
         can_view: false,
         can_update: false,
         can_delete: false,
+        sidebar_order: permissionStore.get(f.feature_id).sidebar_order,
       };
     });
-    setPermissionsMap(next);
+    permissionStore.replace(next);
     toast.info("All permissions cleared");
   };
-
-  // Total active features count in this role
-  const totalGrantedCount = useMemo(() => {
-    return Object.values(permissionsMap).filter(
-      (p) => p.can_view || p.can_create || p.can_update || p.can_delete
-    ).length;
-  }, [permissionsMap]);
 
   // Save changes
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault?.();
     if (!role || readOnly) return;
 
-    const payloadPermissions = Object.entries(permissionsMap).map(([featureId, p]) => ({
+    const payloadPermissions = Object.entries(permissionStore.getAll()).map(([featureId, p]) => ({
       feature_id: featureId,
       can_create: p.can_create,
       can_view: p.can_view,
       can_update: p.can_update,
       can_delete: p.can_delete,
+      sidebar_order: p.sidebar_order,
     }));
 
     try {
@@ -268,85 +519,30 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
 
   // Column Header Renderers with select-whole-column support
   const renderColumnHeader = useCallback(
-    (
-      label: string,
-      field: "can_create" | "can_view" | "can_update" | "can_delete"
-    ) => {
-      if (readOnly) return label;
-
-      const features = matrixData?.features || [];
-      const count = features.length;
-      const checkedCount = features.filter(
-        (f) => Boolean(permissionsMap[f.feature_id]?.[field])
-      ).length;
-      const isAllChecked = count > 0 && checkedCount === count;
-      const isIndeterminate = checkedCount > 0 && checkedCount < count;
-
-      return (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleColumnToggleAll(field);
-          }}
-          className="group inline-flex items-center justify-center gap-1.5 py-1 px-2 -my-1 rounded-md text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 active:bg-blue-100/60 transition-all cursor-pointer select-none"
-          title={
-            isAllChecked
-              ? `Clear all ${label} permissions (${checkedCount}/${count})`
-              : `Select all ${label} permissions (${checkedCount}/${count})`
-          }
-        >
-          <span>{label}</span>
-          <span
-            className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded text-[9px] font-bold transition-colors ${
-              isAllChecked
-                ? "bg-blue-600 text-white"
-                : isIndeterminate
-                ? "bg-blue-100 text-blue-700"
-                : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
-            }`}
-          >
-            {isAllChecked ? "✓" : isIndeterminate ? "−" : "+"}
-          </span>
-        </button>
-      );
-    },
-    [readOnly, matrixData, permissionsMap, handleColumnToggleAll]
+    (label: string, field: PermissionField) => (
+      <PermissionColumnHeader
+        store={permissionStore}
+        features={matrixData?.features || []}
+        field={field}
+        label={label}
+        readOnly={readOnly}
+        onToggle={handleColumnToggleAll}
+      />
+    ),
+    [permissionStore, matrixData?.features, readOnly, handleColumnToggleAll]
   );
 
-  const renderRowAllHeader = useCallback(() => {
-    if (readOnly) return "Row All";
-    const features = matrixData?.features || [];
-    const count = features.length;
-    const fullRowsCount = features.filter((f) => {
-      const p = permissionsMap[f.feature_id];
-      return p && p.can_create && p.can_view && p.can_update && p.can_delete;
-    }).length;
-    const isAllFull = count > 0 && fullRowsCount === count;
-
-    return (
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleToggleEverything();
-        }}
-        className="group inline-flex items-center justify-center gap-1 py-1 px-1.5 -my-1 rounded-md text-xs font-semibold text-slate-700 hover:text-blue-600 hover:bg-blue-50/80 active:bg-blue-100/60 transition-all cursor-pointer select-none"
-        title={isAllFull ? "Clear all permissions" : "Select all permissions"}
-      >
-        <span>Row All</span>
-        <span
-          className={`inline-flex items-center justify-center w-3.5 h-3.5 rounded text-[9px] font-bold transition-colors ${
-            isAllFull
-              ? "bg-blue-600 text-white"
-              : "bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600"
-          }`}
-        >
-          {isAllFull ? "✓" : "+"}
-        </span>
-      </button>
-    );
-  }, [readOnly, matrixData, permissionsMap, handleToggleEverything]);
+  const renderRowAllHeader = useCallback(
+    () => (
+      <PermissionAllHeader
+        store={permissionStore}
+        features={matrixData?.features || []}
+        readOnly={readOnly}
+        onToggle={handleToggleEverything}
+      />
+    ),
+    [permissionStore, matrixData?.features, readOnly, handleToggleEverything]
+  );
 
   // DataTable columns definition
   const columns = useMemo<Column<RolePermissionMatrixItem>[]>(
@@ -411,29 +607,36 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           ),
         },
         {
+          key: "sidebar_order",
+          header: "Position",
+          sortable: true,
+          width: "82px",
+          className: "text-center",
+          headerClassName: "text-center",
+          render: (row) => (
+            <SidebarOrderCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              featureName={row.feature_name}
+              readOnly={readOnly}
+            />
+          ),
+        },
+        {
           key: "can_create",
           header: renderColumnHeader("Create", "can_create"),
           sortable: false,
           width: "90px",
           className: "text-center",
           headerClassName: "text-center justify-center",
-          render: (row) => {
-            const perm = permissionsMap[row.feature_id];
-            return (
-              <div className="flex justify-center">
-                <Checkbox
-                  id={`perm-create-${row.feature_id}`}
-                  checked={perm?.can_create || false}
-                  disabled={readOnly}
-                  onCheckedChange={
-                    readOnly
-                      ? undefined
-                      : () => handleCellToggle(row.feature_id, "can_create")
-                  }
-                />
-              </div>
-            );
-          },
+          render: (row) => (
+            <PermissionCheckboxCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              field="can_create"
+              readOnly={readOnly}
+            />
+          ),
         },
         {
           key: "can_view",
@@ -442,23 +645,14 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           width: "90px",
           className: "text-center",
           headerClassName: "text-center justify-center",
-          render: (row) => {
-            const perm = permissionsMap[row.feature_id];
-            return (
-              <div className="flex justify-center">
-                <Checkbox
-                  id={`perm-view-${row.feature_id}`}
-                  checked={perm?.can_view || false}
-                  disabled={readOnly}
-                  onCheckedChange={
-                    readOnly
-                      ? undefined
-                      : () => handleCellToggle(row.feature_id, "can_view")
-                  }
-                />
-              </div>
-            );
-          },
+          render: (row) => (
+            <PermissionCheckboxCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              field="can_view"
+              readOnly={readOnly}
+            />
+          ),
         },
         {
           key: "can_update",
@@ -467,23 +661,14 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           width: "90px",
           className: "text-center",
           headerClassName: "text-center justify-center",
-          render: (row) => {
-            const perm = permissionsMap[row.feature_id];
-            return (
-              <div className="flex justify-center">
-                <Checkbox
-                  id={`perm-update-${row.feature_id}`}
-                  checked={perm?.can_update || false}
-                  disabled={readOnly}
-                  onCheckedChange={
-                    readOnly
-                      ? undefined
-                      : () => handleCellToggle(row.feature_id, "can_update")
-                  }
-                />
-              </div>
-            );
-          },
+          render: (row) => (
+            <PermissionCheckboxCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              field="can_update"
+              readOnly={readOnly}
+            />
+          ),
         },
         {
           key: "can_delete",
@@ -492,23 +677,14 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           width: "90px",
           className: "text-center",
           headerClassName: "text-center justify-center",
-          render: (row) => {
-            const perm = permissionsMap[row.feature_id];
-            return (
-              <div className="flex justify-center">
-                <Checkbox
-                  id={`perm-delete-${row.feature_id}`}
-                  checked={perm?.can_delete || false}
-                  disabled={readOnly}
-                  onCheckedChange={
-                    readOnly
-                      ? undefined
-                      : () => handleCellToggle(row.feature_id, "can_delete")
-                  }
-                />
-              </div>
-            );
-          },
+          render: (row) => (
+            <PermissionCheckboxCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              field="can_delete"
+              readOnly={readOnly}
+            />
+          ),
         },
       ];
 
@@ -520,33 +696,20 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
           width: "80px",
           className: "text-center",
           headerClassName: "text-center justify-center",
-          render: (row) => {
-            const perm = permissionsMap[row.feature_id];
-            const isRowFull =
-              perm && perm.can_create && perm.can_view && perm.can_update && perm.can_delete;
-            return (
-              <div className="flex justify-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleRowToggleAll(row.feature_id)}
-                  className="h-6 w-6 p-0 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-[11px]"
-                  title={isRowFull ? "Clear row" : "Select all in row"}
-                >
-                  {isRowFull ? "✓" : "+"}
-                </Button>
-              </div>
-            );
-          },
+          render: (row) => (
+            <PermissionRowAllCell
+              store={permissionStore}
+              featureId={row.feature_id}
+              readOnly={readOnly}
+            />
+          ),
         });
       }
 
       return baseCols;
     },
     [
-      permissionsMap,
-      handleCellToggle,
-      handleRowToggleAll,
+      permissionStore,
       renderColumnHeader,
       renderRowAllHeader,
       readOnly,
@@ -638,7 +801,9 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
             <div className="flex items-center gap-1.5 border-l border-slate-200 pl-3">
               <Lock size={12} className="text-slate-400" />
               <span className="text-slate-600">
-                <strong className="text-slate-900 font-semibold">{totalGrantedCount}</strong> /{" "}
+                <strong className="text-slate-900 font-semibold">
+                  <ConfiguredFeatureCount store={permissionStore} />
+                </strong> /{" "}
                 {matrixData?.features?.length || 70} Configured
               </span>
             </div>
@@ -665,6 +830,3 @@ export const RolePermissionMatrixModal: React.FC<RolePermissionMatrixModalProps>
 };
 
 export default RolePermissionMatrixModal;
-
-
-

@@ -208,11 +208,9 @@ export const BoardTasksPage: React.FC<BoardTasksPageProps> = ({
           </div>
         </div>
 
-        {/* Create Task Button */}
         {canCreateTask && (
           <Button
             onClick={() => setFormModalOpen(true)}
-            className="rounded-2xl bg-slate-600 hover:bg-slate-700 text-white font-medium shadow-xs shrink-0 px-5"
           >
             <Plus size={16} className="mr-2" />
             Create Board Task
@@ -220,7 +218,6 @@ export const BoardTasksPage: React.FC<BoardTasksPageProps> = ({
         )}
       </div>
 
-      {/* Status Tabs Filter */}
       <div className="overflow-x-auto pb-1">
         <Tabs
           value={statusFilter}
@@ -262,7 +259,6 @@ export const BoardTasksPage: React.FC<BoardTasksPageProps> = ({
         </Tabs>
       </div>
 
-      {/* Main Content Area */}
       {isTasksLoading ? (
         <div className="flex flex-col items-center justify-center min-h-[350px] text-slate-400 gap-3">
           <Loader2 size={32} className="animate-spin text-indigo-600" />
@@ -294,7 +290,6 @@ export const BoardTasksPage: React.FC<BoardTasksPageProps> = ({
         </div>
       )}
 
-      {/* Create Board Task Modal */}
       <BoardTaskFormModal
         isOpen={isFormModalOpen}
         onClose={() => setFormModalOpen(false)}

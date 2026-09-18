@@ -53,7 +53,7 @@ export const ModulePlaceholder: React.FC<ModulePlaceholderProps> = ({
         onClick={handleBack}
         className="mt-6 text-xs cursor-pointer"
       >
-        <ArrowLeft size={14} className="mr-1.5" /> {backText}
+        <ArrowLeft size={14} className="" /> {backText}
       </Button>
     </div>
   );

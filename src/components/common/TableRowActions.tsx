@@ -17,6 +17,12 @@ export interface TableRowActionsProps {
   canEdit?: boolean;
   /** Whether the user has permission to delete (defaults to true if onDelete provided) */
   canDelete?: boolean;
+  /** Reserves the View button position when another row can be viewed. */
+  reserveViewSlot?: boolean;
+  /** Reserves the Edit button position when another row can be edited. */
+  reserveEditSlot?: boolean;
+  /** Reserves the Delete button position when another row can be deleted. */
+  reserveDeleteSlot?: boolean;
 
   /** Whether the View button is disabled */
   viewDisabled?: boolean;
@@ -49,6 +55,9 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
   canView = true,
   canEdit = true,
   canDelete = true,
+  reserveViewSlot = false,
+  reserveEditSlot = false,
+  reserveDeleteSlot = false,
   viewDisabled = false,
   editDisabled = false,
   deleteDisabled = false,
@@ -71,11 +80,14 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
     md: 14,
   }[size];
 
-  const showView = Boolean(onView && canView);
-  const showEdit = Boolean(onEdit && canEdit);
-  const showDelete = Boolean(onDelete && canDelete);
+  const showView = onView ? canView : false;
+  const showEdit = onEdit ? canEdit : false;
+  const showDelete = onDelete ? canDelete : false;
+  const hasViewSlot = showView || reserveViewSlot;
+  const hasEditSlot = showEdit || reserveEditSlot;
+  const hasDeleteSlot = showDelete || reserveDeleteSlot;
 
-  if (!showView && !showEdit && !showDelete && !extraActions) {
+  if (!hasViewSlot && !hasEditSlot && !hasDeleteSlot && !extraActions) {
     return null;
   }
 
@@ -83,7 +95,7 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
     <div className={cn("flex items-center justify-center gap-1", className)}>
       {extraActions}
 
-      {showView && (
+      {showView ? (
         <Button
           variant="ghost"
           size="icon"
@@ -92,15 +104,19 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
           className={cn(
             sizeClasses,
             "text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-colors",
-            viewDisabled && "cursor-not-allowed opacity-40 hover:bg-transparent"
+            viewDisabled
+              ? "cursor-not-allowed opacity-40 hover:bg-transparent"
+              : undefined,
           )}
           title={viewTooltip}
         >
           <Eye size={iconSizes} />
         </Button>
-      )}
+      ) : reserveViewSlot ? (
+        <span className={sizeClasses} aria-hidden="true" />
+      ) : null}
 
-      {showEdit && (
+      {showEdit ? (
         <Button
           variant="ghost"
           size="icon"
@@ -109,15 +125,19 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
           className={cn(
             sizeClasses,
             "text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer transition-colors",
-            editDisabled && "cursor-not-allowed opacity-40 hover:bg-transparent"
+            editDisabled
+              ? "cursor-not-allowed opacity-40 hover:bg-transparent"
+              : undefined,
           )}
           title={editTooltip}
         >
           <Pencil size={iconSizes} />
         </Button>
-      )}
+      ) : reserveEditSlot ? (
+        <span className={sizeClasses} aria-hidden="true" />
+      ) : null}
 
-      {showDelete && (
+      {showDelete ? (
         <Button
           variant="ghost"
           size="icon"
@@ -126,13 +146,17 @@ export const TableRowActions: React.FC<TableRowActionsProps> = ({
           className={cn(
             sizeClasses,
             "text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer transition-colors",
-            deleteDisabled && "cursor-not-allowed opacity-40 hover:bg-transparent"
+            deleteDisabled
+              ? "cursor-not-allowed opacity-40 hover:bg-transparent"
+              : undefined,
           )}
           title={deleteTooltip}
         >
           <Trash2 size={iconSizes} />
         </Button>
-      )}
+      ) : reserveDeleteSlot ? (
+        <span className={sizeClasses} aria-hidden="true" />
+      ) : null}
     </div>
   );
 };

@@ -15,8 +15,13 @@ export const NAV_KEY_TO_PATH: Record<string, string> = {
   socials_polls: "/polls",
   socials_board_member: "/board-members",
   socials_committee_member: "/committee-members",
-  visitors: "/visitors",
-  visitors_preapproved: "/visitors/preapproved",
+  board_member: "/board-members",
+  board_members: "/board-members",
+  committee_member: "/committee-members",
+  committee_members: "/committee-members",
+  visitors: "/visitor-management",
+  visitors_preapproved: "/visitor-management",
+  pre_approved_visitors: "/visitor-management",
   deliveries: "/deliveries",
   marketplace: "/marketplace",
   amenities: "/amenities",
@@ -52,7 +57,7 @@ export const NAV_KEY_TO_PATH: Record<string, string> = {
   // Security routes
   visitor_management: "/visitor-management",
   vm_new: "/visitor-management/new",
-  vm_preapproved: "/visitor-management/preapproved",
+  vm_preapproved: "/visitor-management",
   vm_checkin: "/visitor-management/checkin",
   vm_checkout: "/visitor-management/checkout",
   vm_history: "/visitor-management/history",
@@ -94,9 +99,6 @@ export const PATH_TO_NAV_KEY: Record<string, string> = {
   "/committee-members": "socials_committee_member",
   "/socials/committee-members": "socials_committee_member",
   "/socials_committee_member": "socials_committee_member",
-  "/visitors": "visitors",
-  "/visitors/preapproved": "visitors_preapproved",
-  "/visitors_preapproved": "visitors_preapproved",
   "/deliveries": "deliveries",
   "/marketplace": "marketplace",
   "/amenities": "amenities",
@@ -136,7 +138,6 @@ export const PATH_TO_NAV_KEY: Record<string, string> = {
   "/vendors": "vendors",
   "/visitor-management": "visitor_management",
   "/visitor-management/new": "vm_new",
-  "/visitor-management/preapproved": "vm_preapproved",
   "/visitor-management/checkin": "vm_checkin",
   "/visitor-management/checkout": "vm_checkout",
   "/visitor-management/history": "vm_history",
@@ -163,9 +164,6 @@ export const PATH_TO_NAV_KEY: Record<string, string> = {
  */
 export const getPathForNavKey = (key: string, role?: string): string => {
   if (key === "overview") {
-    const roleLower = role?.toLowerCase() || "";
-    if (roleLower === "admin") return "/admin";
-    if (roleLower === "super admin") return "/super-admin";
     return "/dashboard";
   }
   return NAV_KEY_TO_PATH[key] || `/${key.replace(/_/g, "-")}`;
@@ -198,4 +196,3 @@ export const getNavKeyFromPath = (pathname: string, defaultKey: string = "overvi
 
   return defaultKey;
 };
-

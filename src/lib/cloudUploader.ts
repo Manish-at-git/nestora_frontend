@@ -1,7 +1,7 @@
 import apiClient from "@/services/api/apiClient";
 
 const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL
+  import.meta.env.VITE_BACKEND_URL 
 
 /**
  * Resolves an image or file URL safely.

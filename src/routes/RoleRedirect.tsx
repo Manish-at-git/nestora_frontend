@@ -9,18 +9,7 @@ export const RoleRedirect: React.FC = () => {
   if (checking) return null;
   if (!account) return <LoginPage />;
 
-  switch (account.role?.toLowerCase()) {
-    case "super admin":
-      return <Navigate to="/super-admin" replace />;
-    case "admin":
-      return <Navigate to="/admin" replace />;
-    case "security":
-      return <Navigate to="/security" replace />;
-    case "accountant":
-      return <Navigate to="/financials" replace />;
-    default:
-      return <Navigate to="/dashboard" replace />;
-  }
+  return <Navigate to="/dashboard" replace />;
 };
 
 export default RoleRedirect;

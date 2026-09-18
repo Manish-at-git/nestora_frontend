@@ -279,10 +279,9 @@ export const BoardTaskDetailView: React.FC<BoardTaskDetailViewProps> = ({
               {/* Approve (New -> In Progress) */}
               {currentStatus === "New" && isAdmin && (
                 <Button
-                  size="sm"
                   onClick={() => handleStatusUpdate("In Progress")}
                   disabled={isUpdatingStatus}
-                  className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
                 >
                   Approve Task
                 </Button>
@@ -292,19 +291,17 @@ export const BoardTaskDetailView: React.FC<BoardTaskDetailViewProps> = ({
               {(currentStatus === "New" || currentStatus === "In Progress") && (
                 <>
                   <Button
-                    size="sm"
                     variant="outline"
                     onClick={() => handleStatusUpdate("Cancelled")}
                     disabled={isUpdatingStatus}
-                    className="rounded-xl text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
+                    className="text-rose-600 border-rose-200 hover:bg-rose-50 hover:text-rose-700"
                   >
                     Cancel
                   </Button>
                   <Button
-                    size="sm"
                     onClick={() => handleStatusUpdate("Completed")}
                     disabled={isUpdatingStatus}
-                    className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs"
                   >
                     Mark Complete
                   </Button>

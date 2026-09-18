@@ -1,12 +1,12 @@
 import type { NavItem } from "@/types/navigation";
 import type { Account, RolePermission } from "@/types/auth";
+import { NAV_KEY_TO_PATH, getPathForNavKey } from "./navigationPaths";
 
 // ============================================================================
 // Master Navigation Configuration for Admin
 // ============================================================================
 export const ADMIN_NAV_ITEMS: NavItem[] = [
-  { key: "associations", path: "/admin", icon: "Building", label: "Managed Properties" },
-  { key: "overview", path: "/admin/overview", icon: "Overview", label: "Overview" },
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
   { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
   { key: "board_task", path: "/board-tasks", icon: "BoardTasks", label: "Board Task" },
   { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
@@ -56,7 +56,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
 // Master Navigation Configuration for Super Admin
 // ============================================================================
 export const SUPER_ADMIN_NAV_ITEMS: NavItem[] = [
-  { key: "overview", path: "/super-admin", icon: "Overview", label: "Overview" },
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
   { key: "entity_types", path: "/entity-types", icon: "Layers", label: "Entity Types" },
   { key: "entities", path: "/entities", icon: "Building2", label: "Entities" },
   { key: "roles", path: "/roles", icon: "Shield", label: "Roles" },
@@ -98,11 +98,11 @@ export const BOARD_MEMBER_NAV_ITEMS: NavItem[] = [
   },
   {
     key: "visitors",
-    path: "/visitors",
+    path: "/visitor-management",
     icon: "Users",
     label: "Visitor Management",
     subItems: [
-      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+      { key: "visitors_preapproved", path: "/visitor-management", label: "Pre-Approved Visitors" },
     ],
   },
   { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
@@ -138,11 +138,11 @@ export const HOMEOWNER_NAV_ITEMS: NavItem[] = [
   { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
   {
     key: "visitors",
-    path: "/visitors",
+    path: "/visitor-management",
     icon: "Users",
     label: "Visitor Management",
     subItems: [
-      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+      { key: "visitors_preapproved", path: "/visitor-management", label: "Pre-Approved Visitors" },
     ],
   },
   { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
@@ -172,11 +172,11 @@ export const TENANT_NAV_ITEMS: NavItem[] = [
   { key: "amenities", path: "/amenities", icon: "Amenities", label: "Amenities" },
   {
     key: "visitors",
-    path: "/visitors",
+    path: "/visitor-management",
     icon: "Users",
     label: "Visitor Management",
     subItems: [
-      { key: "visitors_preapproved", path: "/visitors", label: "Pre-Approved Visitors" },
+      { key: "visitors_preapproved", path: "/visitor-management", label: "Pre-Approved Visitors" },
     ],
   },
   { key: "deliveries", path: "/deliveries", icon: "Package", label: "Deliveries" },
@@ -187,7 +187,7 @@ export const TENANT_NAV_ITEMS: NavItem[] = [
 // Master Navigation Configuration for Security
 // ============================================================================
 export const SECURITY_NAV_ITEMS: NavItem[] = [
-  { key: "overview", path: "/security", icon: "Overview", label: "Overview" },
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Overview" },
   {
     key: "visitor_management",
     path: "/visitor-management",
@@ -195,7 +195,7 @@ export const SECURITY_NAV_ITEMS: NavItem[] = [
     label: "Visitor Management",
     subItems: [
       { key: "vm_new", path: "/visitor-management/new", label: "New Visitor" },
-      { key: "vm_preapproved", path: "/visitor-management/preapproved", label: "Pre-Approved Visitors" },
+      { key: "vm_preapproved", path: "/visitor-management", label: "Pre-Approved Visitors" },
       { key: "vm_checkin", path: "/visitor-management/checkin", label: "Check-In" },
       { key: "vm_checkout", path: "/visitor-management/checkout", label: "Check-Out" },
       { key: "vm_history", path: "/visitor-management/history", label: "Visitor History" },
@@ -221,7 +221,7 @@ export const SECURITY_NAV_ITEMS: NavItem[] = [
 // Master Navigation Configuration for Accountant
 // ============================================================================
 export const ACCOUNTANT_NAV_ITEMS: NavItem[] = [
-  { key: "overview", path: "/financials", icon: "Overview", label: "Financial Ledger" },
+  { key: "overview", path: "/dashboard", icon: "Overview", label: "Financial Ledger" },
   { key: "service_request", path: "/service-requests", icon: "ServiceRequests", label: "Service Request" },
   { key: "board_task", path: "/board-tasks", icon: "BoardTasks", label: "Board Task" },
   { key: "meetings", path: "/meetings", icon: "Meetings", label: "Meetings" },
@@ -410,40 +410,73 @@ export const checkFeatureAccess = (
  * Constructs dynamic NavItem tree directly from database permissions array
  */
 export const buildDynamicNavItemsFromPermissions = (
-  permissions: RolePermission[]
+  permissions: RolePermission[],
+  role?: string
 ): NavItem[] => {
-  const allowed = permissions.filter((p) => Boolean(p.can_view));
+  // A zero position keeps the permission but hides the item from the sidebar.
+  const allowed = permissions.filter(
+    (p) => Boolean(p.can_view) && Number(p.sidebar_order ?? 0) > 0
+  );
 
   if (allowed.length === 0) return [];
 
   // Map to store children by parent_id
-  const childrenMap = new Map<string, { key: string; label: string; path?: string }[]>();
+  const childrenMap = new Map<
+    string,
+    { key: string; label: string; path?: string; sidebarOrder: number }[]
+  >();
 
   allowed.forEach((p) => {
     if (p.parent_id) {
       const list = childrenMap.get(p.parent_id) || [];
+      const key = p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "";
       list.push({
-        key: p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "",
+        key,
         label: p.feature_name || "",
-        path: p.url || undefined,
+        path: (role ? getPathForNavKey(key, role) : NAV_KEY_TO_PATH[key]) || p.url || undefined,
+        sidebarOrder: Number(p.sidebar_order ?? 0),
       });
       childrenMap.set(p.parent_id, list);
     }
   });
 
+  childrenMap.forEach((children) => {
+    children.sort(
+      (a, b) => a.sidebarOrder - b.sidebarOrder || a.label.localeCompare(b.label)
+    );
+  });
+
   // Build top-level items
-  const topLevel: NavItem[] = [];
+  let topLevel: NavItem[] = [];
   allowed.forEach((p) => {
     if (!p.parent_id) {
       const subItems = p.feature_id ? childrenMap.get(p.feature_id) : undefined;
+      const key = p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "";
       topLevel.push({
-        key: p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_") || "",
+        key,
         label: p.feature_name || "",
-        path: p.url || (subItems && subItems[0]?.path) || undefined,
+        path: (role ? getPathForNavKey(key, role) : NAV_KEY_TO_PATH[key]) || p.url || (subItems && subItems[0]?.path) || undefined,
         icon: p.icon || "LayoutGrid",
         subItems: subItems && subItems.length > 0 ? subItems : undefined,
       });
     }
+  });
+
+  if (role?.toLowerCase() === "admin") {
+    // For Admin, Overview is /admin. Do not show a duplicate "Associations" tab.
+    topLevel = topLevel.filter((item) => item.key !== "associations");
+  }
+
+  topLevel.sort((a, b) => {
+    const aPermission = allowed.find(
+      (p) => (p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_")) === a.key
+    );
+    const bPermission = allowed.find(
+      (p) => (p.feature_code || p.feature_name?.toLowerCase().replace(/\s+/g, "_")) === b.key
+    );
+    const orderDifference =
+      Number(aPermission?.sidebar_order ?? 0) - Number(bPermission?.sidebar_order ?? 0);
+    return orderDifference || a.label.localeCompare(b.label);
   });
 
   return topLevel;
@@ -465,7 +498,8 @@ export const getNavItemsForAccount = (
     account.role_permissions.length > 0
   ) {
     const dynamicItems = buildDynamicNavItemsFromPermissions(
-      account.role_permissions
+      account.role_permissions,
+      account.role
     );
     if (dynamicItems.length > 0) {
       return dynamicItems;

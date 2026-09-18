@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Bell, Building, Wallet } from "lucide-react";
+import { Bell, Building, Wallet, CheckCircle, MessageSquare } from "lucide-react";
 import { NavItem } from "@/types/navigation";
 import { getNavItemsForAccount } from "@/config/navigation";
-import { UpgradePlanModal } from "@/components/common/UpgradePlanModal";
+import {
+  UpgradePlanModal,
+  AdminHomeownerSearch,
+  NotificationDropdown,
+} from "@/components/common";
 import { Select } from "@/components/ui/select";
 import { Sidebar } from "@/components/sidebar";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -88,8 +92,8 @@ export const RoleLayout: React.FC<RoleLayoutProps> = ({
         };
       case "admin":
         return {
-          title: "Association Administrator",
-          description: "Manage associations and community operations.",
+          title: "Admin Dashboard",
+          description: "Manage your assigned associations and oversee operations.",
         };
       case "super admin":
         return {
@@ -270,19 +274,41 @@ export const RoleLayout: React.FC<RoleLayoutProps> = ({
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Global Association Select for Admin ONLY */}
+            {/* Admin Header Controls matching old Admin Dashboard */}
             {isAdmin && (
-              <div className="w-52 sm:w-64">
-                <Select
-                  icon={<Building size={15} />}
-                  options={adminAssociations}
-                  value={activeAssociationId || "ALL"}
-                  onChange={(e) => dispatch(setActiveAssociationId(e.target.value))}
-                  showAllOption
-                  allOptionLabel="All Managed Associations"
-                  size="sm"
-                />
-              </div>
+              <>
+                <AdminHomeownerSearch />
+
+                <div className="w-48 sm:w-56">
+                  <Select
+                    icon={<Building size={15} />}
+                    options={adminAssociations}
+                    value={activeAssociationId || "ALL"}
+                    onChange={(e) => dispatch(setActiveAssociationId(e.target.value))}
+                    showAllOption
+                    allOptionLabel="All Associations"
+                    size="sm"
+                  />
+                </div>
+
+                <NotificationDropdown />
+
+                <button
+                  type="button"
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                  title="Approvals"
+                >
+                  <CheckCircle size={19} />
+                </button>
+
+                <button
+                  type="button"
+                  className="p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors cursor-pointer"
+                  title="Feedback"
+                >
+                  <MessageSquare size={19} />
+                </button>
+              </>
             )}
 
             {account?.role === "Security" && (
@@ -336,6 +362,7 @@ export const RoleLayout: React.FC<RoleLayoutProps> = ({
         onClose={() => setUpgradeModalFeature(null)}
         featureName={upgradeModalFeature}
       />
+
     </div>
   );
 };

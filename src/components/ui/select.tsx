@@ -210,16 +210,15 @@ export const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           : String(value)
         : uncontrolledValue;
 
-    // Find if an option matches currentValue
-    // If currentValue is empty string and placeholder is provided: do not match to allow placeholder rendering
-    const matchingOption = normalizedOptions.find((o) => {
+    // Resolve the selected option. An explicit "all" option uses an empty
+    // external value, so it must remain visible instead of falling back to
+    // the placeholder.
+    const matchingOption = normalizedOptions.find((option) => {
       if (currentValue === "" || currentValue === undefined) {
-        if (placeholder) {
-          return false;
-        }
-        return o.value === EMPTY_VALUE_SENTINEL;
+        return showAllOption && option.value === EMPTY_VALUE_SENTINEL;
       }
-      return o.value === currentValue;
+
+      return option.value === currentValue;
     });
 
     const isOptionSelected = Boolean(matchingOption);

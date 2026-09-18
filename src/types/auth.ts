@@ -21,6 +21,7 @@ export interface RolePermission {
   icon?: string | null;
   url?: string | null;
   order_index?: number;
+  sidebar_order?: number;
 }
 
 export interface Account {

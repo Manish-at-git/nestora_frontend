@@ -8,13 +8,7 @@ import {
   VerifyDetailsPage,
   CreateAccountPage,
 } from "@/features/auth";
-import {
-  AdminDashboard,
-  SuperAdminOverview,
-  SecurityDashboard,
-  AccountantDashboard,
-  DashboardOverview,
-} from "@/features/dashboards";
+import { RoleDashboardRouter } from "./RoleDashboardRouter";
 import { AnnouncementsPage } from "@/features/announcements";
 import { EventsPage } from "@/features/events";
 import { PollsPage } from "@/features/polls";
@@ -38,11 +32,18 @@ import { UsersPage } from "@/features/users";
 import { VendorsPage } from "@/features/vendors";
 import { BankPage } from "@/features/bank";
 import { FinancialsPage } from "@/features/financials";
+import { ChartOfAccountsPage } from "@/features/chart-of-accounts";
 import DesignSystemPage from "@/features/design-system/DesignSystemPage";
 import { ModulePlaceholder } from "@/components/common/ModulePlaceholder";
 import { ElectionPage } from "@/features/election";
 import { AmenitiesPage } from "@/features/amenities";
 import { MarketplacePage } from "@/features/marketplace";
+import { DocumentsPage } from "@/features/documents";
+import { UnitDocumentsPage } from "@/features/unit-documents";
+import {
+  PreApprovedVisitorsPage,
+  PublicVisitorPassPage,
+} from "@/features/visitor-management";
 
 export interface AppRoute {
   path: string;
@@ -79,6 +80,10 @@ export const publicRoutes: AppRoute[] = [
     path: "/design-system",
     element: <DesignSystemPage />,
   },
+  {
+    path: "/visitor-pass/:passCode",
+    element: <PublicVisitorPassPage />,
+  },
 ];
 
 /**
@@ -91,7 +96,7 @@ export const protectedAppRoutes: AppRoute[] = [
   // ==========================================
   {
     path: "/dashboard",
-    element: <DashboardOverview />,
+    element: <RoleDashboardRouter />,
   },
 
   // ==========================================
@@ -172,14 +177,8 @@ export const protectedAppRoutes: AppRoute[] = [
     element: <ServiceRequestsPage />,
   },
   {
-    path: "/documents",
-    element: (
-      <ModulePlaceholder
-        moduleName="documents"
-        title="Document Repository"
-        description="Access association bylaws, meeting minutes, policies, and certificates."
-      />
-    ),
+    path: "/resident-documents",
+    element: <DocumentsPage />,
   },
   {
     path: "/amenities",
@@ -239,17 +238,17 @@ export const protectedAppRoutes: AppRoute[] = [
   // ==========================================
   {
     path: "/admin",
-    element: <AdminDashboard />,
+    element: <Navigate to="/dashboard" replace />,
     allowedRoles: ["Admin", "Super admin"],
   },
   {
     path: "/admin/overview",
-    element: <DashboardOverview />,
+    element: <Navigate to="/dashboard" replace />,
     allowedRoles: ["Admin", "Super admin"],
   },
   {
     path: "/admin/associations",
-    element: <AdminDashboard />,
+    element: <Navigate to="/dashboard" replace />,
     allowedRoles: ["Admin", "Super admin"],
   },
   {
@@ -264,7 +263,7 @@ export const protectedAppRoutes: AppRoute[] = [
   },
   {
     path: "/chart-of-accounts",
-    element: <FinancialsPage />,
+    element: <ChartOfAccountsPage />,
   },
   {
     path: "/bank",
@@ -272,13 +271,7 @@ export const protectedAppRoutes: AppRoute[] = [
   },
   {
     path: "/unit-documents",
-    element: (
-      <ModulePlaceholder
-        moduleName="unit_documents"
-        title="Unit Documents"
-        description="Upload, organize, and access unit-specific title deeds and lease agreements."
-      />
-    ),
+    element: <UnitDocumentsPage />,
   },
   {
     path: "/email-activity",
@@ -306,7 +299,7 @@ export const protectedAppRoutes: AppRoute[] = [
   // ==========================================
   {
     path: "/super-admin",
-    element: <SuperAdminOverview />,
+    element: <Navigate to="/dashboard" replace />,
     allowedRoles: ["Super admin"],
   },
   {
@@ -355,17 +348,11 @@ export const protectedAppRoutes: AppRoute[] = [
   // ==========================================
   {
     path: "/security",
-    element: <SecurityDashboard />,
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: "/visitor-management",
-    element: (
-      <ModulePlaceholder
-        moduleName="visitor_management"
-        title="Visitor Security Desk"
-        description="Log walk-in guests, verify OTP passes, and process gate entries."
-      />
-    ),
+    element: <PreApprovedVisitorsPage />,
   },
   {
     path: "/visitor-management/new",
@@ -374,16 +361,6 @@ export const protectedAppRoutes: AppRoute[] = [
         moduleName="visitor_management"
         title="New Visitor Check-In"
         description="Log walk-in guests, verify OTP passes, and process gate entries."
-      />
-    ),
-  },
-  {
-    path: "/visitor-management/preapproved",
-    element: (
-      <ModulePlaceholder
-        moduleName="visitor_management"
-        title="Pre-Approved Visitor Queue"
-        description="Verify pre-authorized visitor entry passes."
       />
     ),
   },
@@ -493,11 +470,11 @@ export const protectedAppRoutes: AppRoute[] = [
   // ==========================================
   {
     path: "/financials",
-    element: <AccountantDashboard />,
+    element: <FinancialsPage />,
   },
   {
     path: "/financials/:report",
-    element: <AccountantDashboard />,
+    element: <FinancialsPage />,
   },
 
   // ==========================================
@@ -553,11 +530,11 @@ export const protectedAppRoutes: AppRoute[] = [
   },
   {
     path: "/security-dashboard",
-    element: <Navigate to="/security" replace />,
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: "/accountant-dashboard",
-    element: <Navigate to="/financials" replace />,
+    element: <Navigate to="/dashboard" replace />,
   },
 ];
 

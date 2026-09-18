@@ -183,7 +183,7 @@ export const BoardTaskFormModal: React.FC<BoardTaskFormModalProps> = ({
             {isSubmitting ? (
               <>
                 <Loader2 size={16} className="animate-spin mr-2" />
-                Creating...
+                Creating
               </>
             ) : (
               "Create Task"

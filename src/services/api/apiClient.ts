@@ -44,9 +44,11 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      const publicPaths = ["/", "/signin", "/verify", "/create-account"];
       const currentPath = window.location.pathname;
-      const isPublicPath = publicPaths.includes(currentPath);
+      const publicPaths = ["/", "/signin", "/verify", "/create-account"];
+      const isPublicPath =
+        publicPaths.includes(currentPath) ||
+        currentPath.startsWith("/visitor-pass/");
 
       if (localStorage.getItem("nestora_token")) {
         localStorage.removeItem("nestora_token");
@@ -60,4 +62,3 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
-

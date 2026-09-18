@@ -6,6 +6,7 @@ export interface Permission {
   can_view: boolean | number;
   can_update: boolean | number;
   can_delete: boolean | number;
+  sidebar_order?: number;
   role_name?: string;
   feature_name?: string;
   created_at?: string;
@@ -18,6 +19,7 @@ export interface PermissionCreatePayload {
   can_view: boolean;
   can_update: boolean;
   can_delete: boolean;
+  sidebar_order?: number;
 }
 
 export interface PermissionUpdatePayload {
@@ -27,6 +29,7 @@ export interface PermissionUpdatePayload {
   can_view: boolean;
   can_update: boolean;
   can_delete: boolean;
+  sidebar_order?: number;
 }
 
 export interface RolePermissionSummary {
@@ -57,6 +60,7 @@ export interface RolePermissionMatrixItem {
   can_view: boolean | number;
   can_update: boolean | number;
   can_delete: boolean | number;
+  sidebar_order: number;
 }
 
 export interface RolePermissionMatrixResponse {
@@ -80,5 +84,6 @@ export interface BulkPermissionPayload {
     can_view: boolean;
     can_update: boolean;
     can_delete: boolean;
+    sidebar_order: number;
   }[];
 }
